@@ -44,7 +44,7 @@ namespace DigiSign_Realm
         public Realms.Sync.PartitionSyncConfiguration config { get; set; }
         public Realm realm { get; set; }
         public string partition { get; set; }
-        private IList<Models.Sign> allSigns = null;
+        private IQueryable<Models.Sign> allSigns = null;
         private ObservableCollection<Models.Sponsor> sponsorsToDisplay = null;
         private ObservableCollection<Models.Menu> menuToDisplay = null;
 
@@ -85,16 +85,13 @@ namespace DigiSign_Realm
         {
             try
             {
-                //Get all signs and filter
-                var bsonSignList = await user.Functions.CallAsync("getSignList");
-                var feeds = _realmPartition.Split(",").ToList();
-                allSigns = BsonSerializer.Deserialize<IEnumerable<Models.Sign>>(bsonSignList.ToString()).Where(s => feeds.Any(f => f == s.Feed)).ToList();
-                for (var i = 0; i < allSigns.Count(); i++)
-                {
-                    //Get Details
-                    var bsonSign = await user.Functions.CallAsync("getSign", allSigns[i].Id.ToString());
-                    allSigns[i] = BsonSerializer.Deserialize<Models.Sign>(bsonSign.ToString());
-                }
+                var bsonval = await user.Functions.CallAsync("getMyPartitions", txt_deviceID.Text, txt_ipaddr.Text);
+                _realmPartition = bsonval.ToString();
+
+                //Get all signs (the realm should already be filtered)
+                allSigns = realm.All<Models.Sign>().OrderBy(sign => sign.Order);
+
+                await realm.SyncSession.WaitForDownloadAsync();
             }
             catch (Exception ex)
             {
@@ -143,10 +140,17 @@ namespace DigiSign_Realm
 
                 config = new Realms.Sync.PartitionSyncConfiguration("GLOBAL", user);
 
+                realm = await Realm.GetInstanceAsync(config);
+
                 await SyncSigns();
 
+                var token = realm.All<Models.Sign>().SubscribeForNotifications((sender, changes) => {
+                    //This essentially just tells it to pull again on changes by re-setting the index
+                    allSigns.OrderBy(sign => sign.Order);
+                    _currentIndex = 0;
+                });
+
                 DisplayNext();
-                //DisplaySponsors();
             }
         }
 
@@ -268,9 +272,6 @@ namespace DigiSign_Realm
                     // we looped all the way around so reset
                     _currentIndex = 0;
                     // see if our partitions changed
-
-                    var bsonval = await user.Functions.CallAsync("getMyPartitions", txt_deviceID.Text, txt_ipaddr.Text);
-                    _realmPartition = bsonval.ToString();
 
                     await SyncSigns();
 
