@@ -81,6 +81,28 @@ namespace DigiSign_Realm
             EnableSync();
         }
 
+        private async Task SyncSigns()
+        {
+            try
+            {
+                //Get all signs and filter
+                var bsonSignList = await user.Functions.CallAsync("getSignList");
+                var feeds = _realmPartition.Split(",").ToList();
+                allSigns = BsonSerializer.Deserialize<IEnumerable<Models.Sign>>(bsonSignList.ToString()).Where(s => feeds.Any(f => f == s.Feed)).ToList();
+                for (var i = 0; i < allSigns.Count(); i++)
+                {
+                    //Get Details
+                    var bsonSign = await user.Functions.CallAsync("getSign", allSigns[i].Id.ToString());
+                    allSigns[i] = BsonSerializer.Deserialize<Models.Sign>(bsonSign.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                txt_error.Text = ex.ToString();
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
         public async Task EnableSync()
         {
             // https://stackoverflow.com/questions/31746613/how-do-i-get-a-unique-identifier-for-a-device-within-windows-10-universal
@@ -121,23 +143,7 @@ namespace DigiSign_Realm
 
                 config = new Realms.Sync.PartitionSyncConfiguration("GLOBAL", user);
 
-                try
-                {
-                    //Get all signs and filter
-                    var bsonSignList = await user.Functions.CallAsync("getSignList");
-                    var feeds = _realmPartition.Split(",").ToList();
-                    allSigns = BsonSerializer.Deserialize<IEnumerable<Models.Sign>>(bsonSignList.ToString()).Where(s => feeds.Any(f => f == s.Feed)).ToList();
-                    for(var i = 0; i < allSigns.Count(); i++)
-                    {
-                        //Get Details
-                        var bsonSign = await user.Functions.CallAsync("getSign", allSigns[i].Id.ToString());
-                        allSigns[i] = BsonSerializer.Deserialize<Models.Sign>(bsonSign.ToString());
-                    }
-                } catch (Exception ex)
-                {
-                    txt_error.Text = ex.ToString();
-                    Console.WriteLine(ex.ToString());
-                }
+                await SyncSigns();
 
                 DisplayNext();
                 //DisplaySponsors();
@@ -262,19 +268,11 @@ namespace DigiSign_Realm
                     // we looped all the way around so reset
                     _currentIndex = 0;
                     // see if our partitions changed
-                    try
-                    {
-                        var bsonval = await user.Functions.CallAsync("getMyPartitions", txt_deviceID.Text, txt_ipaddr.Text);
-                        var rps = bsonval.ToString();
-                        if (rps.Length > 0)
-                        {
-                            _realmPartition = rps;
-                            partitions = _realmPartition.Split(",").ToList();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                    }
+
+                    var bsonval = await user.Functions.CallAsync("getMyPartitions", txt_deviceID.Text, txt_ipaddr.Text);
+                    _realmPartition = bsonval.ToString();
+
+                    await SyncSigns();
 
                     // only on last cycle run sponsors code
                     if (partitions.Contains("sponsors"))

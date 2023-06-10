@@ -26,16 +26,16 @@
 
                 <StackPanel Orientation="Vertical" Grid.Column="0">
                     <TextBlock Foreground="White" Margin="100,20,0,0" FontSize="30">Device ID:</TextBlock>
-                    <TextBox Name="txt_deviceID" Text="" Foreground="White" Margin="100,10,100,0"></TextBox>
+                    <TextBox Name="txt_deviceID" Text="" IsReadOnly="True" Foreground="White" Margin="100,10,100,0"></TextBox>
 
                     <TextBlock Foreground="White" Margin="100,20,0,0" FontSize="30">Connection:</TextBlock>
-                    <TextBox Name="txt_connection" Text="" Foreground="White" Margin="100,10,100,0"></TextBox>
+                    <TextBox Name="txt_connection" IsReadOnly="True" Text="" Foreground="White" Margin="100,10,100,0"></TextBox>
 
                     <TextBlock Foreground="White" Margin="100,20,0,0" FontSize="30">LAN IP:</TextBlock>
-                    <TextBox Name="txt_ipaddr" Text="" Foreground="White" Margin="100,10,100,0"></TextBox>
+                    <TextBox Name="txt_ipaddr" IsReadOnly="True" Text="" Foreground="White" Margin="100,10,100,0"></TextBox>
 
                     <TextBlock Foreground="White" Margin="100,20,0,0" FontSize="30">Errors:</TextBlock>
-                    <TextBox Name="txt_error" Text="" Foreground="White" Margin="100,10,100,0"></TextBox>
+                    <TextBox Name="txt_error" IsReadOnly="True" Text="" Foreground="White" Margin="100,10,100,0"></TextBox>
                 </StackPanel>
 
                 <StackPanel Orientation="Vertical" Grid.Column="1">
