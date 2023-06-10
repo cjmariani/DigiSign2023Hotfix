@@ -41,7 +41,7 @@ namespace DigiSign_Realm
 
         public Realms.Sync.App app { get; set; }
         public Realms.Sync.User user { get; set; }
-        public Realms.Sync.SyncConfiguration config { get; set; }
+        public Realms.Sync.PartitionSyncConfiguration config { get; set; }
         public Realm realm { get; set; }
         public string partition { get; set; }
         private IList<Models.Sign> allSigns = null;
@@ -119,7 +119,7 @@ namespace DigiSign_Realm
             {
                 txt_error.Text = "Syncing signs...";
 
-                config = new Realms.Sync.SyncConfiguration("GLOBAL", user);
+                config = new Realms.Sync.PartitionSyncConfiguration("GLOBAL", user);
 
                 try
                 {
