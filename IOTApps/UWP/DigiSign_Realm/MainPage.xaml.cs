@@ -17,6 +17,7 @@ using Windows.Networking.Connectivity;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml.Media;
 using System.Collections.ObjectModel;
+using MongoDB.Bson.Serialization;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -32,6 +33,8 @@ namespace DigiSign_Realm
         int _currentTimer = 0;
         string _realmAppID = "";
         string _realmAPIKey = "";
+        string _realmEmail = "";
+        string _realmPassword = "";
         string _realmPartition = "";
         string _RealmHostingUrl = "";
         string _WebsiteHomepage = "";
@@ -41,7 +44,7 @@ namespace DigiSign_Realm
         public Realms.Sync.SyncConfiguration config { get; set; }
         public Realm realm { get; set; }
         public string partition { get; set; }
-        private IQueryable<Models.Sign> allSigns = null;
+        private IList<Models.Sign> allSigns = null;
         private ObservableCollection<Models.Sponsor> sponsorsToDisplay = null;
         private ObservableCollection<Models.Menu> menuToDisplay = null;
 
@@ -63,6 +66,8 @@ namespace DigiSign_Realm
             var resources = new ResourceLoader("Resources");
             _realmAppID = resources.GetString("AutoProvsionRealmAppID");
             _realmAPIKey = resources.GetString("AutoProvisionRealmAPIKey");
+            _realmEmail = resources.GetString("AutoProvisionRealmEmail");
+            _realmPassword = resources.GetString("AutoProvisionRealmPassword");
             _RealmHostingUrl = resources.GetString("RealmHostingUrl");
             _WebsiteHomepage = resources.GetString("WebsiteHomepage");
             txt_connection.Text = "..." + _realmAPIKey.Substring(_realmAPIKey.Length - 5) + " @ " + _realmAppID;
@@ -98,7 +103,7 @@ namespace DigiSign_Realm
 
             // connect
             app = Realms.Sync.App.Create(_realmAppID);
-            user = await app.LogInAsync(Realms.Sync.Credentials.ApiKey(_realmAPIKey));
+            user = await app.LogInAsync(Realms.Sync.Credentials.EmailPassword(_realmEmail, _realmPassword));
 
             // get auto provision details
             var bsonval = await user.Functions.CallAsync("getMyPartitions", deviceID, txt_ipaddr.Text);
@@ -114,27 +119,25 @@ namespace DigiSign_Realm
             {
                 txt_error.Text = "Syncing signs...";
 
-                // get actual signs
                 config = new Realms.Sync.SyncConfiguration("GLOBAL", user);
 
                 try
                 {
-                    realm = await Realm.GetInstanceAsync(config);
-
-                    await realm.GetSession().WaitForDownloadAsync();
+                    //Get all signs and filter
+                    var bsonSignList = await user.Functions.CallAsync("getSignList");
+                    var feeds = _realmPartition.Split(",").ToList();
+                    allSigns = BsonSerializer.Deserialize<IEnumerable<Models.Sign>>(bsonSignList.ToString()).Where(s => feeds.Any(f => f == s.Feed)).ToList();
+                    for(var i = 0; i < allSigns.Count(); i++)
+                    {
+                        //Get Details
+                        var bsonSign = await user.Functions.CallAsync("getSign", allSigns[i].Id.ToString());
+                        allSigns[i] = BsonSerializer.Deserialize<Models.Sign>(bsonSign.ToString());
+                    }
                 } catch (Exception ex)
                 {
                     txt_error.Text = ex.ToString();
                     Console.WriteLine(ex.ToString());
                 }
-
-                allSigns = realm.All<Models.Sign>().OrderBy(sign => sign.Order);
-
-                var token = realm.All<Models.Sign>().SubscribeForNotifications((sender, changes, error) =>
-                {
-                    allSigns.OrderBy(sign => sign.Order);
-                    _currentIndex = 0;
-                });
 
                 DisplayNext();
                 //DisplaySponsors();
