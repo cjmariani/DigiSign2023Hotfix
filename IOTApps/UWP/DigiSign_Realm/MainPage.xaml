@@ -84,10 +84,7 @@
         <!--END SPONSORS PAGE -->
 
         <!--BEGIN MENU PAGE -->
-        <StackPanel Orientation="Vertical" x:Name="ctr_menu" Visibility="Collapsed" Background="Black" RenderTransformOrigin="0,1" Margin="420,-420,420,-420" UseLayoutRounding="False" d:LayoutRounding="Auto" Width="1080" Height="1920" VerticalAlignment="Top" HorizontalAlignment="Left">
-            <StackPanel.RenderTransform>
-                <CompositeTransform Rotation="-90" TranslateX="1500" TranslateY="-420"/>
-            </StackPanel.RenderTransform>
+        <StackPanel Orientation="Vertical" x:Name="ctr_menu" Visibility="Collapsed" Background="Black" UseLayoutRounding="False" d:LayoutRounding="Auto" Width="1080" Height="1920" VerticalAlignment="Top" HorizontalAlignment="Left">
 
             <TextBlock Foreground="White" FontSize="96" TextAlignment="Center" Margin="10" x:Name="txt_menu_heading">Menu</TextBlock>
 
