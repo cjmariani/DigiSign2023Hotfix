@@ -195,7 +195,13 @@ namespace DigiSign_Realm
 
             var allMenus = realm.All<Models.Menu>().ToList();
             menuToDisplay = new ObservableCollection<Models.Menu>(allMenus.Where(m => m.SoldAtID == menuID).OrderBy(m => m.Name).ToList());
-            txt_menu_heading.Text = menuToDisplay.FirstOrDefault().SoldAtName;
+            var menu_name = menuToDisplay.FirstOrDefault().SoldAtName;
+            if (menu_name == "Did not match")
+            {
+                menu_name = "Kiddie Karnival";
+            }
+            txt_menu_heading.Text = menu_name;
+
             var groupedMenu = menuToDisplay.GroupBy(m => m.CategoryName).ToList();
 
             sp_menu.Children.Clear();
